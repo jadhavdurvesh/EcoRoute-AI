@@ -27,9 +27,9 @@ for _ in range(12000):
     if mode == "Car":
         base /= max(passengers, 1)
     elif mode == "Bus":
-        base *= 18 / max(occupancy, 2)
+        base *= (18 / max(occupancy, 2))
     elif mode == "Metro":
-        base *= 120 / max(occupancy, 20)
+        base *= (120 / max(occupancy, 20))
 
     congestion_multiplier = 1 + 0.20 * traffic if mode in {"Car", "Motorcycle", "Bus"} else 1.0
     weather_multiplier = 1 + 0.06 * rain if mode in {"Car", "Motorcycle", "Bus"} else 1.0

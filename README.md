@@ -1,40 +1,42 @@
 # EcoRoute AI
 
-AI-powered mobility sustainability analysis for the 1M1B AI for Sustainability Virtual Internship.
+AI-powered sustainable mobility decision support for comparing transport options, estimating trip emissions, and identifying lower-emission alternatives.
 
-## What it does
-- Predicts trip-level CO2e emissions with a machine-learning model.
-- Compares common transport modes.
-- Recommends lower-emission alternatives.
-- Estimates potential emissions avoided versus car travel.
-- Provides an interactive Streamlit interface.
+## 1M1B AI for Sustainability
+- **Primary SDGs:** SDG 11 – Sustainable Cities and Communities; SDG 13 – Climate Action
+- **Core AI:** Random Forest regression trained on mobility features to estimate CO2e per trip.
+- **Product:** Interactive Streamlit dashboard with scenario comparison, AI prediction, and recommendation logic.
 
-## Sustainability alignment
-- SDG 11: Sustainable Cities and Communities
-- SDG 13: Climate Action
-
-## Project status
-Prototype / educational project prepared for the 1M1B AI for Sustainability Virtual Internship.
-
-## Repository structure
-- `app/` — Streamlit application
-- `src/` — model and feature logic
-- `data/` — prototype dataset generation/input
-- `models/` — trained model artifacts
-- `notebooks/` — experiments and validation
-- `docs/` — submission and demo materials
-- `tests/` — automated checks
+## Features
+- AI-based CO2e prediction for a trip
+- Compare car, motorcycle, bus, metro, bicycle, and walking
+- Distance, passengers, occupancy, traffic, and weather inputs
+- Scenario ranking by predicted emissions
+- Estimated emissions avoided by switching options
+- Explainable feature-impact panel
+- Downloadable comparison CSV
 
 ## Run locally
 ```bash
 python -m venv .venv
-# Windows
-.venv\\Scripts\\activate
-# macOS/Linux
-# source .venv/bin/activate
+# Windows: .venv\\Scripts\\activate
+# Linux/macOS: source .venv/bin/activate
 pip install -r requirements.txt
-streamlit run app.py
+python ml/train.py
+streamlit run app/main.py
 ```
 
-## Model note
-Reported validation metrics are based on the project's prototype/synthetic dataset and should not be interpreted as real-world emissions accuracy.
+## Project structure
+```text
+ecoroute-ai/
+├── app/main.py
+├── ml/train.py
+├── ml/predict.py
+├── data/generate_dataset.py
+├── docs/project_summary.md
+├── requirements.txt
+└── README.md
+```
+
+## Note on the dataset
+The included training dataset is synthetic and is intended for a transparent prototype. Production deployment should replace it with validated local mobility/emissions data.
