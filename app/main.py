@@ -1,18 +1,25 @@
-from pathlib import Path
 import sys
-import json
+from pathlib import Path
+
 import pandas as pd
-import streamlit as st
 import plotly.express as px
+import streamlit as st
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from ml.predict import predict_one
+
+from ml.model import build_model
 
 st.set_page_config(page_title="EcoRoute AI", page_icon="🌱", layout="wide")
 
 st.markdown("# 🌱 EcoRoute AI")
 st.caption("AI-powered mobility decisions for lower-carbon trips")
+
+@st.cache_resource(show_spinner="Preparing the EcoRoute AI model...")
+def get_model():
+    return build_model()
+
+model = get_model()
 
 with st.sidebar:
     st.header("Trip scenario")
@@ -25,13 +32,11 @@ with st.sidebar:
 
 MODES = ["Car", "Motorcycle", "Bus", "Metro", "Bicycle", "Walking"]
 DEFAULT_OCC = {"Car": 1, "Motorcycle": 1, "Bus": 18, "Metro": 120, "Bicycle": 1, "Walking": 1}
+FEATURES = ["mode", "distance_km", "passengers", "occupancy", "traffic_index", "temperature_c", "rain_index", "weekend"]
 
 rows = []
 for mode in MODES:
-    if mode == "Car":
-        occupancy = passengers
-    else:
-        occupancy = DEFAULT_OCC[mode]
+    occupancy = passengers if mode == "Car" else DEFAULT_OCC[mode]
     payload = {
         "mode": mode,
         "distance_km": distance,
@@ -42,8 +47,8 @@ for mode in MODES:
         "rain_index": rain,
         "weekend": int(weekend),
     }
-    value = predict_one(payload)
-    rows.append({"Mode": mode, "Predicted CO2e (kg)": value})
+    value = 0.0 if mode in {"Bicycle", "Walking"} else float(model.predict(pd.DataFrame([{k: payload[k] for k in FEATURES}]))[0])
+    rows.append({"Mode": mode, "Predicted CO2e (kg)": max(0.0, value)})
 
 results = pd.DataFrame(rows).sort_values("Predicted CO2e (kg)").reset_index(drop=True)
 recommended = results.iloc[0]
@@ -56,7 +61,6 @@ saved = max(0.0, car - float(recommended["Predicted CO2e (kg)"]))
 c3.metric("Avoided vs car", f"{saved:.3f} kg CO₂e")
 
 st.divider()
-
 left, right = st.columns([1.4, 1])
 with left:
     fig = px.bar(results, x="Mode", y="Predicted CO2e (kg)", title="AI-predicted trip emissions")
@@ -72,10 +76,4 @@ with right:
 st.subheader("Compare scenarios")
 st.dataframe(results.style.format({"Predicted CO2e (kg)": "{:.3f}"}), use_container_width=True, hide_index=True)
 st.download_button("Download comparison CSV", results.to_csv(index=False), "ecoroute_comparison.csv", "text/csv")
-
-metrics_path = ROOT / "ml" / "artifacts" / "metrics.json"
-if metrics_path.exists():
-    metrics = json.loads(metrics_path.read_text())
-    st.caption(f"Prototype model validation on held-out synthetic data: MAE {metrics['mae_kg']:.3f} kg CO₂e; R² {metrics['r2']:.3f}.")
-
 st.info("Prototype note: the training data included with this project is synthetic. For deployment in a real city, retrain the model with validated local mobility and emissions data.")
