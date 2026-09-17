@@ -1,12 +1,14 @@
 from pathlib import Path
 
 import pandas as pd
+import streamlit as st
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
 
+@st.cache_resource(show_spinner="Training EcoRoute AI model once for this app session...")
 def build_model():
     root = Path(__file__).resolve().parents[1]
     data_path = root / "data" / "synthetic_mobility.csv"
@@ -29,9 +31,10 @@ def build_model():
     model = Pipeline([
         ("preprocess", pre),
         ("regressor", RandomForestRegressor(
-            n_estimators=180,
+            n_estimators=60,
+            max_depth=10,
             random_state=42,
-            n_jobs=-1,
+            n_jobs=1,
             min_samples_leaf=2,
         )),
     ])
