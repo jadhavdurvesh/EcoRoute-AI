@@ -14,7 +14,11 @@ st.set_page_config(page_title="EcoRoute AI", page_icon="🌱", layout="wide")
 st.markdown("# 🌱 EcoRoute AI")
 st.caption("AI-powered mobility decisions for lower-carbon trips")
 
-model = build_model()
+@st.cache_resource(show_spinner="Preparing the EcoRoute AI model...")
+def get_model():
+    return build_model()
+
+model = get_model()
 
 with st.sidebar:
     st.header("Trip scenario")
