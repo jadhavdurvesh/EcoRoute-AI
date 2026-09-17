@@ -7,7 +7,6 @@ import streamlit as st
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-
 from ml.model import build_model
 
 st.set_page_config(page_title="EcoRoute AI", page_icon="🌱", layout="wide")
@@ -22,12 +21,14 @@ model = get_model()
 
 with st.sidebar:
     st.header("Trip scenario")
-    distance = st.slider("Distance (km)", 0.5, 80.0, 8.0, 0.5)
-    passengers = st.slider("Passengers", 1, 6, 1)
-    traffic = st.slider("Traffic intensity", 0.0, 1.0, 0.45, 0.05)
-    temperature = st.slider("Temperature (°C)", 0.0, 45.0, 27.0, 1.0)
-    rain = st.slider("Rain intensity", 0.0, 1.0, 0.1, 0.05)
-    weekend = st.checkbox("Weekend", value=False)
+    with st.form("trip_scenario"):
+        distance = st.slider("Distance (km)", 0.5, 80.0, 8.0, 0.5)
+        passengers = st.slider("Passengers", 1, 6, 1)
+        traffic = st.slider("Traffic intensity", 0.0, 1.0, 0.45, 0.05)
+        temperature = st.slider("Temperature (°C)", 0.0, 45.0, 27.0, 1.0)
+        rain = st.slider("Rain intensity", 0.0, 1.0, 0.1, 0.05)
+        weekend = st.checkbox("Weekend", value=False)
+        st.form_submit_button("Analyze trip", type="primary", width="stretch")
 
 MODES = ["Car", "Motorcycle", "Bus", "Metro", "Bicycle", "Walking"]
 DEFAULT_OCC = {"Car": 1, "Motorcycle": 1, "Bus": 18, "Metro": 120, "Bicycle": 1, "Walking": 1}
@@ -36,23 +37,13 @@ FEATURES = ["mode", "distance_km", "passengers", "occupancy", "traffic_index", "
 rows = []
 for mode in MODES:
     occupancy = passengers if mode == "Car" else DEFAULT_OCC[mode]
-    payload = {
-        "mode": mode,
-        "distance_km": distance,
-        "passengers": passengers if mode == "Car" else 1,
-        "occupancy": occupancy,
-        "traffic_index": traffic,
-        "temperature_c": temperature,
-        "rain_index": rain,
-        "weekend": int(weekend),
-    }
+    payload = {"mode": mode, "distance_km": distance, "passengers": passengers if mode == "Car" else 1, "occupancy": occupancy, "traffic_index": traffic, "temperature_c": temperature, "rain_index": rain, "weekend": int(weekend)}
     value = 0.0 if mode in {"Bicycle", "Walking"} else float(model.predict(pd.DataFrame([{k: payload[k] for k in FEATURES}]))[0])
     rows.append({"Mode": mode, "Predicted CO2e (kg)": max(0.0, value)})
 
 results = pd.DataFrame(rows).sort_values("Predicted CO2e (kg)").reset_index(drop=True)
 results["Predicted CO2e (kg)"] = results["Predicted CO2e (kg)"].round(3)
 recommended = results.iloc[0]
-
 c1, c2, c3 = st.columns(3)
 c1.metric("Recommended option", recommended["Mode"])
 c2.metric("Predicted emissions", f"{recommended['Predicted CO2e (kg)']:.3f} kg CO₂e")
